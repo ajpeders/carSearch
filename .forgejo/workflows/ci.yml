@@ -1,0 +1,15 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Byte-compile every python file — catches syntax errors without
+      # installing runtime deps.
+      - name: python compile check
+        run: python3 -m compileall -q app tests

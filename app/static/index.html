@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>carSearch</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%97%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --page: #edf1f4;
+    --page-strong: #dfe7ec;
+    --surface: rgba(255, 255, 255, .94);
+    --surface-strong: #ffffff;
+    --surface-soft: #f4f7f9;
+    --surface-muted: #e8eef2;
+    --ink: #13212d;
+    --muted: #5c6a78;
+    --faint: #8c98a4;
+    --line: #d4dde4;
+    --line-strong: #bdc9d2;
+    --brand: #135d66;
+    --brand-strong: #0d4c53;
+    --brand-soft: #dceff1;
+    --green: #1d6f49;
+    --gold: #896718;
+    --red: #b1333a;
+    --shadow: 0 20px 36px rgba(15, 28, 40, .07);
+    --shadow-small: 0 8px 18px rgba(15, 28, 40, .06);
+    --radius: 12px;
+    --radius-small: 9px;
+  }
+
+  * { box-sizing: border-box; }
+  html { background: var(--page); }
+  body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--ink);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.86), rgba(255,255,255,.26) 320px, rgba(255,255,255,0) 520px),
+      linear-gradient(135deg, rgba(19,93,102,.08), transparent 34%),
+      radial-gradient(circle at top left, rgba(19,93,102,.14), transparent 360px),
+      var(--page);
+    font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, input, select { font: inherit; }
+  button {
+    min-height: 42px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-small);
+    background: var(--surface-strong);
+    color: var(--ink);
+    padding: 0 14px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background .14s, border-color .14s, box-shadow .14s, transform .14s, color .14s;
+  }
+  button:hover {
+    border-color: var(--line-strong);
+    background: var(--surface-soft);
+    box-shadow: 0 10px 18px rgba(18, 35, 48, .07);
+  }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .56; cursor: default; box-shadow: none; transform: none; }
+  button:focus-visible {
+    outline: 3px solid rgba(19, 93, 102, .18);
+    outline-offset: 2px;
+  }
+  input, select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-small);
+    background: var(--surface-strong);
+    color: var(--ink);
+    padding: 0 12px;
+    outline: none;
+    transition: border-color .14s, box-shadow .14s, background .14s;
+  }
+  input:focus, select:focus {
+    border-color: var(--brand);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(19, 93, 102, .12);
+  }
+
+  .app {
+    width: min(1320px, 100%);
+    margin: 0 auto;
+    padding: 24px clamp(14px, 3vw, 32px) 56px;
+  }
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255,255,255,.58);
+    border-radius: calc(var(--radius) + 4px);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.72)),
+      rgba(255,255,255,.74);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+  }
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border: 1px solid rgba(255,255,255,.36);
+    border-radius: 14px;
+    background:
+      linear-gradient(145deg, #11363d, #135d66);
+    color: #ffffff;
+    font-size: 22px;
+    box-shadow: 0 14px 28px rgba(19, 93, 102, .2);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1;
+    letter-spacing: -.02em;
+  }
+  .sub {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: .01em;
+  }
+  .status-pill {
+    justify-self: end;
+    min-height: 42px;
+    display: grid;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(255,255,255,.9);
+    color: var(--muted);
+    padding: 8px 14px;
+    font-size: 13px;
+    box-shadow: var(--shadow-small);
+  }
+  .status-pill:empty { display: none; }
+  .status-copy {
+    display: block;
+    white-space: nowrap;
+  }
+  .status-bar {
+    position: relative;
+    display: none;
+    width: min(220px, 42vw);
+    height: 8px;
+    margin-top: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dfe7ed;
+  }
+  .status-bar.show { display: block; }
+  .status-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--brand), #1a8f97);
+    transition: width .2s ease;
+  }
+  .status-bar.indeterminate .status-fill {
+    width: 36%;
+    animation: status-slide 1.05s ease-in-out infinite;
+  }
+  @keyframes status-slide {
+    0% { transform: translateX(-110%); }
+    55% { transform: translateX(175%); }
+    100% { transform: translateX(175%); }
+  }
+
+  .control-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+    gap: 16px;
+    align-items: stretch;
+    margin-bottom: 16px;
+    min-width: 0;
+  }
+  .panel-section {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: calc(var(--radius) + 2px);
+    background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(250,252,253,.92));
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  .panel-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .primary {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: #ffffff;
+    font-weight: 700;
+  }
+  .primary:hover {
+    border-color: var(--brand-strong);
+    background: var(--brand-strong);
+    color: #ffffff;
+  }
+  .secondary {
+    background: var(--surface-soft);
+    color: #30404e;
+  }
+  .spacer { flex: 1 1 auto; }
+
+  .locbar,
+  .viewbar {
+    display: grid;
+    gap: 10px;
+  }
+  .locbar {
+    grid-template-columns: minmax(92px, 120px) minmax(92px, 120px) auto minmax(130px, 1fr);
+    margin-top: 12px;
+  }
+  .viewbar {
+    grid-template-columns: minmax(150px, 1fr) minmax(96px, 120px) minmax(96px, 120px);
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+  }
+  .field.inline-action {
+    justify-content: flex-end;
+  }
+  .field input,
+  .field select {
+    font-size: 13px;
+  }
+  #locMsg {
+    align-self: end;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    color: var(--green);
+    font-size: 13px;
+    white-space: normal;
+  }
+
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .metric {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: calc(var(--radius) + 1px);
+    background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(247,250,252,.86));
+    box-shadow: var(--shadow-small);
+    padding: 14px 15px;
+  }
+  .metric span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  .metric strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--ink);
+    font-size: 26px;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+    letter-spacing: -.03em;
+  }
+  .metric.view-metric strong { font-size: 18px; }
+
+  form.add {
+    display: none;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+    border: 1px solid var(--line);
+    border-radius: calc(var(--radius) + 2px);
+    background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(250,252,253,.92));
+    box-shadow: var(--shadow);
+    padding: 18px;
+  }
+  form.add.open { display: grid; }
+  form.add label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 650;
+  }
+  form.add label.wide { grid-column: span 3; }
+  form.add label.compact { grid-column: span 2; }
+  form.add .actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 2px;
+  }
+
+  .car {
+    border: 1px solid var(--line);
+    border-radius: calc(var(--radius) + 2px);
+    background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(249,251,252,.94));
+    box-shadow: var(--shadow-small);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .car-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.98), rgba(245,248,250,.92));
+  }
+  .car-title { min-width: 0; }
+  .car-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex-wrap: wrap;
+    margin-top: 5px;
+  }
+  .car-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 16px;
+    font-weight: 760;
+    letter-spacing: -.01em;
+  }
+  .car-filters {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+  .sort-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    border: 1px solid rgba(19, 93, 102, .18);
+    border-radius: 999px;
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+    padding: 0 9px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    white-space: nowrap;
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  .car-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .icon-btn {
+    min-height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+    border-radius: 10px;
+  }
+  .remove {
+    width: 36px;
+    padding: 0;
+    color: var(--red);
+    font-size: 19px;
+  }
+  .coverage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 11px;
+    padding: 12px 18px 0;
+    flex-wrap: wrap;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  .coverage::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    padding: 14px 18px 18px;
+  }
+  .listing {
+    position: relative;
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: calc(var(--radius) + 1px);
+    background: var(--surface-strong);
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(20, 33, 43, .03);
+    transition: border-color .14s, box-shadow .14s, transform .14s;
+  }
+  .listing:hover {
+    border-color: rgba(19,93,102,.36);
+    box-shadow: 0 14px 24px rgba(17, 31, 44, .1);
+    transform: translateY(-2px);
+  }
+  .listing-link {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    color: inherit;
+    text-decoration: none;
+  }
+  .fav {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    min-height: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .78);
+    border-radius: 50%;
+    background: rgba(20, 33, 45, .72);
+    color: #ffd166;
+    font-size: 18px;
+    line-height: 1;
+    backdrop-filter: blur(10px);
+  }
+  .fav:hover { background: rgba(20, 33, 45, .9); border-color: rgba(255, 255, 255, .94); }
+  .thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background:
+      linear-gradient(135deg, rgba(19,93,102,.14), rgba(141,111,47,.1)),
+      #dbe3ea;
+  }
+  .thumb.ph {
+    display: grid;
+    place-items: center;
+    color: var(--faint);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .body {
+    display: grid;
+    gap: 9px;
+    padding: 14px;
+  }
+  .source-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+  }
+  .price-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+  .price {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -.03em;
+  }
+  .newb {
+    display: inline-flex;
+    align-items: center;
+    min-height: 19px;
+    border-radius: 999px;
+    background: #dff4e9;
+    color: var(--green);
+    padding: 0 7px;
+    font-size: 10px;
+    font-weight: 800;
+  }
+  .goneb {
+    display: inline-flex;
+    align-items: center;
+    min-height: 19px;
+    border-radius: 999px;
+    background: #f4e3e4;
+    color: var(--red);
+    padding: 0 7px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .listing.stale { opacity: .62; }
+  .listing.stale:hover { opacity: 1; }
+  .deal {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    border-radius: 999px;
+    padding: 0 8px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .deal-great { background: #d7f2e4; color: var(--green); }
+  .deal-good  { background: #e8f4ec; color: var(--green); }
+  .deal-fair  { background: #f4f0e0; color: var(--gold); }
+  .deal-high  { background: #f9e5e5; color: var(--red); }
+  .title {
+    min-height: 38px;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 0;
+  }
+  .detail-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    max-width: 100%;
+    border: 1px solid #d8e0e6;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: #334252;
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 650;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .meta span:not(.badge) {
+    min-height: 22px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    padding: 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .site-badge {
+    max-width: 100%;
+    border-color: rgba(19, 93, 102, .18);
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: 10px;
+    font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  .empty {
+    color: var(--muted);
+    font-size: 14px;
+    padding: 20px 18px 22px;
+  }
+  .empty-state {
+    display: grid;
+    place-items: center;
+    min-height: 260px;
+    border: 1px dashed var(--line-strong);
+    border-radius: calc(var(--radius) + 2px);
+    background: rgba(255, 255, 255, .76);
+    color: var(--muted);
+    text-align: center;
+    padding: 28px;
+  }
+  .empty-state strong {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--ink);
+    font-size: 18px;
+  }
+  .spin { animation: pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: .46 } 50% { opacity: 1 } }
+
+  @media (max-width: 1080px) {
+    .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    form.add { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    form.add label.wide { grid-column: span 2; }
+  }
+
+  @media (max-width: 920px) {
+    .topbar,
+    .control-panel {
+      grid-template-columns: 1fr;
+    }
+    .status-pill { justify-self: start; }
+    form.add { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 640px) {
+    .app { padding-top: 16px; }
+    .brand-mark { width: 38px; height: 38px; }
+    .sub { font-size: 13px; }
+    .toolbar { display: grid; grid-template-columns: 1fr 1fr; }
+    .toolbar .spacer { display: none; }
+    .summary { grid-template-columns: 1fr 1fr; }
+    .metric.view-metric { grid-column: 1 / -1; }
+    .locbar,
+    .viewbar {
+      grid-template-columns: 1fr;
+    }
+    .field.inline-action { justify-content: stretch; }
+    #locMsg { min-height: 22px; }
+    form.add,
+    form.add label.wide,
+    form.add label.compact {
+      grid-template-columns: 1fr;
+      grid-column: auto;
+    }
+    form.add .actions { justify-content: stretch; }
+    form.add .actions button { flex: 1; }
+    .car-head {
+      grid-template-columns: 1fr;
+    }
+    .car-actions {
+      display: grid;
+      grid-template-columns: 1fr 40px;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">🚗</div>
+      <div>
+        <h1>carSearch</h1>
+        <div class="sub">Tracked marketplace listings in one place</div>
+      </div>
+    </div>
+    <span id="status" class="status-pill" role="status" aria-live="polite"></span>
+  </header>
+
+  <section class="control-panel" aria-label="Search controls">
+    <div class="panel-section">
+      <div class="panel-title">Watchlist</div>
+      <div class="toolbar">
+        <button id="runAll" class="primary" title="Re-run every saved search against the live sites (slower)">Re-sync all</button>
+        <button id="refreshView" class="secondary" title="Reload the latest saved results without re-searching (instant)">Refresh</button>
+        <button id="toggleAdd" class="secondary" aria-expanded="false" aria-controls="addForm">Add car</button>
+        <span class="spacer"></span>
+      </div>
+      <div class="locbar">
+        <label class="field">ZIP
+          <input id="locZip" class="zip" placeholder="80022" maxlength="5" inputmode="numeric" aria-label="ZIP code">
+        </label>
+        <label class="field">Radius
+          <input id="locRadius" class="rad" type="number" inputmode="numeric" placeholder="100" aria-label="Radius in miles">
+        </label>
+        <div class="field inline-action">
+          <button id="saveLoc">Set location</button>
+        </div>
+        <span id="locMsg"></span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">View</div>
+      <div class="viewbar">
+        <label class="field">Sort
+          <select id="vSort" aria-label="Sort listings">
+            <option value="price_asc">Price: low to high</option>
+            <option value="">Default</option>
+            <option value="price_desc">Price: high to low</option>
+            <option value="mileage_asc">Mileage: lowest</option>
+            <option value="year_desc">Year: newest</option>
+          </select>
+        </label>
+        <label class="field">Min price
+          <input id="vMin" class="rad" type="number" inputmode="numeric" placeholder="0" aria-label="Minimum price">
+        </label>
+        <label class="field">Max price
+          <input id="vMax" class="rad" type="number" inputmode="numeric" placeholder="35000" aria-label="Maximum price">
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <section id="summary" class="summary" aria-label="Watchlist summary"></section>
+
+  <form class="add" id="addForm">
+    <label class="wide">Name<input name="name" placeholder="2019 VW Alltrack" required></label>
+    <label class="compact">Make<input name="make" placeholder="Volkswagen"></label>
+    <label class="compact">Model<input name="model" placeholder="Golf Alltrack"></label>
+    <label class="wide">Keywords<input name="keywords" placeholder="leather, AWD"></label>
+    <label class="compact">Transmission
+      <select name="transmission">
+        <option value="">Any</option>
+        <option value="manual">Manual</option>
+        <option value="automatic">Automatic</option>
+      </select>
+    </label>
+    <label class="compact">Min year<input name="min_year" type="number" inputmode="numeric"></label>
+    <label class="compact">Max year<input name="max_year" type="number" inputmode="numeric"></label>
+    <label class="compact">Max mileage<input name="max_mileage" type="number" inputmode="numeric" placeholder="50000"></label>
+    <label class="compact">Max price<input name="max_price" type="number" inputmode="numeric"></label>
+    <label class="compact">ZIP<input name="zip" placeholder="80022"></label>
+    <label class="compact">Radius (mi)<input name="radius" type="number" inputmode="numeric"></label>
+    <label class="compact">Sort
+      <select name="sort">
+        <option value="price_asc">Price: low to high</option>
+        <option value="price_desc">Price: high to low</option>
+        <option value="mileage_asc">Mileage: lowest</option>
+        <option value="year_desc">Year: newest</option>
+        <option value="year_asc">Year: oldest</option>
+        <option value="relevance">Best match</option>
+      </select>
+    </label>
+    <div class="actions">
+      <button type="button" id="cancelAdd">Cancel</button>
+      <button type="submit" class="primary" id="submitCar">Add car</button>
+    </div>
+  </form>
+
+  <div id="favorites"></div>
+  <main id="cars"></main>
+</div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+const statusEl = $("#status");
+const carsEl = $("#cars");
+const summaryEl = $("#summary");
+const fmtPrice = p => p == null ? "Price N/A" : "$" + p.toLocaleString();
+const fmtMiles = m => m == null ? null : m.toLocaleString() + " mi";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+let syncing = false;
+
+function setStatus(message, opts = {}) {
+  const { progress = null, indeterminate = false } = opts;
+  const showBar = indeterminate || typeof progress === "number";
+  const pct = typeof progress === "number"
+    ? Math.max(0, Math.min(100, progress))
+    : 0;
+  statusEl.innerHTML = `
+    <span class="status-copy">${esc(message)}</span>
+    <span class="status-bar ${showBar ? "show" : ""} ${indeterminate ? "indeterminate" : ""}" aria-hidden="true">
+      <span class="status-fill" style="width:${pct}%"></span>
+    </span>
+  `;
+  statusEl.className = `status-pill${showBar || indeterminate ? " spin" : ""}`;
+}
+
+function clearStatus() {
+  statusEl.className = "status-pill";
+}
+
+function setSyncing(active) {
+  syncing = active;
+  $("#runAll").disabled = active;
+  $("#refreshView").disabled = active;
+  $("#saveLoc").disabled = active;
+  for (const el of document.querySelectorAll(".run-one, .edit, .remove")) el.disabled = active;
+}
+
+function filterSummary(f) {
+  const p = [];
+  if (f.make) p.push(f.make);
+  if (f.model) p.push(f.model);
+  if (f.keywords) p.push(`"${f.keywords}"`);
+  if (f.min_year || f.max_year) p.push([f.min_year, f.max_year].filter(Boolean).join("-") || "yr");
+  if (f.max_mileage) p.push("<" + f.max_mileage.toLocaleString() + " mi");
+  if (f.max_price) p.push("<$" + f.max_price.toLocaleString());
+  const sortLabel = sortText(f.sort);
+  if (sortLabel) p.push(sortLabel);
+  return p.join(" · ") || "any car";
+}
+
+function sortText(sort) {
+  return {
+    relevance: "best match",
+    year_desc: "newest first",
+    year_asc: "oldest first",
+    mileage_asc: "lowest miles",
+    price_asc: "price low-high",
+    price_desc: "price high-low",
+  }[sort || "relevance"];
+}
+
+const DEAL_LABEL = { great: "Great price", good: "Good price", fair: "Fair price", high: "Above market" };
+function dealBadge(l) {
+  if (!l.deal_rating || !DEAL_LABEL[l.deal_rating]) return "";
+  const delta = typeof l.price_delta === "number"
+    ? ` (${l.price_delta <= 0 ? "-" : "+"}$${Math.abs(l.price_delta).toLocaleString()})` : "";
+  const mkt = l.market_price ? `market ~$${l.market_price.toLocaleString()}` : "market value";
+  return `<span class="deal deal-${l.deal_rating}" title="vs ${esc(mkt)}${esc(delta)}">${DEAL_LABEL[l.deal_rating]}${delta}</span>`;
+}
+
+const listingById = {};
+function listingCard(l, opts = {}) {
+  listingById[l.id] = l;
+  const sub = [l.year, l.make, l.model].filter(Boolean).join(" ");
+  const title = sub || l.title || "Untitled listing";
+  const meta = [fmtMiles(l.mileage), l.location].filter(Boolean).map(x => `<span>${esc(x)}</span>`).join("");
+  const detailValues = [l.transmission, ...(Array.isArray(l.highlights) ? l.highlights : []), opts.keywords]
+    .filter(Boolean)
+    .filter((value, index, values) => values.findIndex(v => String(v).toLowerCase() === String(value).toLowerCase()) === index)
+    .slice(0, 6);
+  const details = detailValues.length
+    ? `<span class="details">${detailValues.map(x => `<span class="detail-chip">${esc(x)}</span>`).join("")}</span>`
+    : "";
+  const thumb = l.image_url
+    ? `<img class="thumb" src="${esc(l.image_url)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'thumb ph',textContent:'car'}))">`
+    : `<div class="thumb ph">car</div>`;
+  const faved = favIds.has(l.id);
+  // NEW while first seen <24h ago — persisted server-side, so it survives
+  // reloads and covers listings found by the background auto-refresh too.
+  const NEW_WINDOW_S = 24 * 3600;
+  const isNew = opts.isNew || (l.first_seen && (Date.now() / 1000 - l.first_seen) < NEW_WINDOW_S);
+  const nb = isNew ? `<span class="newb">NEW</span>` : "";
+  const gb = l.stale ? `<span class="goneb" title="Missing from the latest search — possibly sold">Gone?</span>` : "";
+  return `<article class="listing${l.stale ? " stale" : ""}">
+    <button class="fav" data-fav="${esc(l.id)}" title="${faved ? "Remove favorite" : "Save favorite"}" aria-label="${faved ? "Remove favorite" : "Save favorite"}">${faved ? "★" : "☆"}</button>
+    <a class="listing-link" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer">
+      ${thumb}
+      <div class="body">
+        <div class="source-row"><span class="badge site-badge">${esc(l.site_label || l.site)}</span></div>
+        <div class="price-row"><span class="price">${esc(fmtPrice(l.price))}</span>${nb}${gb}${dealBadge(l)}</div>
+        <span class="title">${esc(title)}</span>
+        ${details}
+        <span class="meta">${meta}</span>
+      </div>
+    </a>
+  </article>`;
+}
+
+let favorites = [];
+let favIds = new Set();
+async function loadFavorites() {
+  try { favorites = await (await fetch("/api/favorites")).json(); }
+  catch { favorites = []; }
+  favIds = new Set(favorites.map(f => f.id));
+}
+async function toggleFav(id) {
+  if (favIds.has(id)) {
+    await fetch("/api/favorites/" + encodeURIComponent(id), { method: "DELETE" });
+  } else {
+    const l = listingById[id]; if (!l) return;
+    await fetch("/api/favorites", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(l) });
+  }
+  await loadFavorites();
+  renderAll();
+}
+function renderFavorites() {
+  const el = document.getElementById("favorites");
+  if (!favorites.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `<section class="car"><div class="car-head"><div class="car-title"><div class="car-name">Favorites</div><div class="car-filters">${favorites.length} saved</div></div></div><div class="grid">${applyView(favorites).map(l => listingCard(l)).join("")}</div></section>`;
+}
+
+const view = { sort: "price_asc", minP: null, maxP: null };
+function applyView(listings) {
+  let ls = listings.filter(l => {
+    if (view.minP != null && (l.price == null || l.price < view.minP)) return false;
+    if (view.maxP != null && (l.price == null || l.price > view.maxP)) return false;
+    return true;
+  });
+  const key = {
+    price_asc: l => l.price ?? Infinity,
+    price_desc: l => -(l.price ?? -Infinity),
+    mileage_asc: l => l.mileage ?? Infinity,
+    year_desc: l => -(l.year ?? -Infinity),
+  }[view.sort];
+  if (key) ls = [...ls].sort((a, b) => key(a) - key(b));
+  return ls;
+}
+function renderSummary() {
+  const knownListings = Object.values(results).reduce((n, r) => n + ((r.listings || []).length), 0);
+  const visibleListings = Object.values(results).reduce((n, r) => n + applyView(r.listings || []).length, 0)
+    + applyView(favorites).length;
+  const filterLabel = view.minP == null && view.maxP == null
+    ? "No price filter"
+    : `${view.minP == null ? "$0" : fmtPrice(view.minP)}-${view.maxP == null ? "Any" : fmtPrice(view.maxP)}`;
+  summaryEl.innerHTML = `
+    <div class="metric"><span>Tracked cars</span><strong>${searches.length}</strong></div>
+    <div class="metric"><span>Saved results</span><strong>${knownListings}</strong></div>
+    <div class="metric"><span>Visible cards</span><strong>${visibleListings}</strong></div>
+    <div class="metric"><span>Favorites</span><strong>${favorites.length}</strong></div>
+    <div class="metric view-metric"><span>Price view</span><strong>${esc(filterLabel)}</strong></div>
+  `;
+}
+function renderAll() { renderSummary(); renderFavorites(); renderCars(searches, results); }
+
+function renderCars(searches, resultsById = {}) {
+  if (!searches.length) {
+    carsEl.innerHTML = `<div class="empty-state"><div><strong>No cars tracked yet</strong><span>Add a car to start a watchlist.</span></div></div>`;
+    return;
+  }
+  carsEl.innerHTML = searches.map(s => {
+    const r = resultsById[s.id];
+    let inner;
+    if (!r) inner = `<div class="empty">Not searched yet.</div>`;
+    else if (!r.listings.length) inner = `<div class="empty">No listings found.</div>`;
+    else {
+      const shown = applyView(r.listings);
+      inner = shown.length
+        ? `<div class="grid">${shown.map(l => listingCard(l, { isNew: (r.added || []).includes(l.id), keywords: s.filters.keywords })).join("")}</div>`
+        : `<div class="empty">None match the price filter.</div>`;
+    }
+    let cov = "";
+    if (r) {
+      const nnew = (r.added || []).length, ngone = (r.removed || []).length;
+      const nstale = (r.listings || []).filter(l => l.stale).length;
+      const extra = [nnew ? `+${nnew} new` : "", nstale ? `${nstale} possibly sold` : "", ngone ? `${ngone} gone` : ""].filter(Boolean).join(" · ");
+      const src = r.sites ? `${r.sites.filter(x => x.count).length}/${r.sites.length} sites · ${r.took_ms}ms` : "saved";
+      cov = `<div class="coverage">${r.listings.length} listings · ${src}${extra ? " · " + extra : ""}</div>`;
+    }
+    return `<section class="car" data-id="${esc(s.id)}">
+      <div class="car-head">
+        <div class="car-title">
+          <div class="car-name">${esc(s.name)}</div>
+          <div class="car-meta-row">
+            <div class="car-filters">${esc(filterSummary(s.filters))}</div>
+            <span class="sort-chip">Sort: ${esc(sortText(s.filters.sort))}</span>
+          </div>
+        </div>
+        <div class="car-actions">
+          <button class="icon-btn edit">Edit</button>
+          <button class="icon-btn run-one">Search</button>
+          <button class="icon-btn remove" title="Remove" aria-label="Remove">×</button>
+        </div>
+      </div>
+      ${cov}${inner}
+    </section>`;
+  }).join("");
+}
+
+let searches = [];
+const results = {};
+
+async function load() {
+  const [sl, rl] = await Promise.all([
+    fetch("/api/searches").then(r => r.json()),
+    fetch("/api/searches/results").then(r => r.json()).catch(() => []),
+  ]);
+  searches = sl;
+  for (const r of rl) results[r.id] = { listings: r.listings, sites: null, took_ms: null };
+  await loadFavorites();
+  renderAll();
+}
+
+async function runAll() {
+  if (syncing) return;
+  if (!searches.length) {
+    setStatus("No saved searches to re-sync");
+    return;
+  }
+  setSyncing(true);
+  setStatus(`Re-syncing 0/${searches.length}`, { progress: 0 });
+  try {
+    const data = [];
+    for (let i = 0; i < searches.length; i++) {
+      const s = searches[i];
+      setStatus(`Re-syncing ${i}/${searches.length} · ${s.name}`, {
+        progress: (i / searches.length) * 100,
+      });
+      const res = await fetch(`/api/searches/${s.id}/run`, { method: "POST" });
+      if (!res.ok) throw new Error("search failed");
+      const r = await res.json();
+      data.push(r);
+      results[s.id] = { ...r.result, added: r.added, removed: r.removed };
+      renderAll();
+      setStatus(`Re-syncing ${i + 1}/${searches.length} · ${s.name}`, {
+        progress: ((i + 1) / searches.length) * 100,
+      });
+    }
+    renderAll();
+    const total = data.reduce((n, r) => n + r.result.listings.length, 0);
+    const nnew = data.reduce((n, r) => n + (r.added || []).length, 0);
+    setStatus(`${total} listings across ${data.length} cars${nnew ? ` · ${nnew} new` : ""}`, {
+      progress: 100,
+    });
+  } catch (e) {
+    setStatus("Re-sync failed");
+  } finally {
+    setSyncing(false);
+    if (!statusEl.innerHTML) clearStatus();
+  }
+}
+
+async function runOne(id) {
+  if (syncing) return;
+  const s = searches.find(x => x.id === id);
+  setSyncing(true);
+  setStatus(`Re-syncing${s ? ` · ${s.name}` : ""}`, { indeterminate: true });
+  try {
+    const res = await fetch(`/api/searches/${id}/run`, { method: "POST" });
+    if (!res.ok) throw new Error("search failed");
+    const r = await res.json();
+    results[id] = { ...r.result, added: r.added, removed: r.removed }; renderAll();
+    setStatus(`${r.result.listings.length} listings${(r.added || []).length ? ` · ${r.added.length} new` : ""}`, {
+      progress: 100,
+    });
+  } catch {
+    setStatus("Re-sync failed");
+  } finally {
+    setSyncing(false);
+  }
+}
+
+document.addEventListener("click", e => {
+  const fb = e.target.closest(".fav");
+  if (fb) { e.preventDefault(); e.stopPropagation(); toggleFav(fb.dataset.fav); }
+});
+
+carsEl.addEventListener("click", async e => {
+  const sec = e.target.closest(".car"); if (!sec) return;
+  const id = sec.dataset.id;
+  if (e.target.classList.contains("run-one")) runOne(id);
+  else if (e.target.classList.contains("edit")) {
+    const s = searches.find(x => x.id === id);
+    if (s) startEdit(s);
+  }
+  else if (e.target.classList.contains("remove")) {
+    if (!confirm("Remove this car from the watchlist?")) return;
+    await fetch(`/api/searches/${id}`, { method: "DELETE" });
+    delete results[id]; await load();
+  }
+});
+
+// Full refresh: reload the persisted results + favorites from the store and
+// re-render, without hitting any site. Cheap/instant — good for a wall dash or
+// after another client re-synced.
+async function refreshView() {
+  if (syncing) return;
+  setSyncing(true);
+  setStatus("Refreshing", { indeterminate: true });
+  try {
+    await load();
+    setStatus("Refreshed", { progress: 100 });
+  } catch {
+    setStatus("Refresh failed");
+  } finally {
+    setSyncing(false);
+  }
+}
+
+$("#runAll").addEventListener("click", runAll);
+$("#refreshView").addEventListener("click", refreshView);
+const form = $("#addForm");
+const toggleAdd = $("#toggleAdd");
+const submitBtn = $("#submitCar");
+let editingId = null;   // set while editing an existing car; null = adding
+
+function setAddOpen(open) {
+  form.classList.toggle("open", open);
+  toggleAdd.setAttribute("aria-expanded", String(open));
+  toggleAdd.textContent = open ? "Close form" : "Add car";
+}
+function resetForm() { form.reset(); editingId = null; submitBtn.textContent = "Add car"; }
+
+// Pre-fill the form from an existing search and switch it into edit mode.
+function startEdit(s) {
+  const f = s.filters || {};
+  editingId = s.id;
+  form.name.value = s.name || "";
+  form.make.value = f.make || ""; form.model.value = f.model || "";
+  form.keywords.value = f.keywords || "";
+  form.transmission.value = f.transmission || "";
+  form.min_year.value = f.min_year ?? ""; form.max_year.value = f.max_year ?? "";
+  form.max_mileage.value = f.max_mileage ?? ""; form.max_price.value = f.max_price ?? "";
+  form.zip.value = f.zip || ""; form.radius.value = f.radius ?? "";
+  form.sort.value = f.sort || "price_asc";
+  submitBtn.textContent = "Save changes";
+  setAddOpen(true);
+  form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+toggleAdd.addEventListener("click", () => {
+  const willOpen = !form.classList.contains("open");
+  if (willOpen) resetForm();                 // opening via "Add car" = fresh add
+  setAddOpen(willOpen);
+});
+$("#cancelAdd").addEventListener("click", () => { resetForm(); setAddOpen(false); });
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(form);
+  const num = k => { const v = fd.get(k); return v ? Number(v) : undefined; };
+  const str = k => { const v = (fd.get(k) || "").trim(); return v || undefined; };
+  const body = {
+    name: str("name"),
+    filters: {
+      make: str("make"), model: str("model"), keywords: str("keywords"),
+      transmission: str("transmission"),
+      min_year: num("min_year"), max_year: num("max_year"),
+      max_mileage: num("max_mileage"), max_price: num("max_price"),
+      zip: str("zip"), radius: num("radius"), sort: fd.get("sort") || "price_asc",
+    },
+  };
+  const url = editingId ? `/api/searches/${editingId}` : "/api/searches";
+  await fetch(url, {
+    method: editingId ? "PUT" : "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  resetForm(); setAddOpen(false); await load();
+});
+
+async function loadLocation() {
+  try {
+    const l = await (await fetch("/api/location")).json();
+    $("#locZip").value = l.zip || "";
+    $("#locRadius").value = l.radius || 100;
+    if (l.zip) $("#locMsg").textContent = `within ${l.radius} mi of ${l.zip}`;
+  } catch { /* ignore */ }
+}
+$("#saveLoc").addEventListener("click", async () => {
+  const zip = $("#locZip").value.trim();
+  const radius = Number($("#locRadius").value) || 100;
+  await fetch("/api/location", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ zip, radius }) });
+  $("#locMsg").textContent = zip ? `within ${radius} mi of ${zip}` : "cleared";
+  runAll();
+});
+
+function updateView() {
+  view.sort = $("#vSort").value;
+  view.minP = $("#vMin").value ? Number($("#vMin").value) : null;
+  view.maxP = $("#vMax").value ? Number($("#vMax").value) : null;
+  renderAll();
+}
+$("#vSort").addEventListener("change", updateView);
+$("#vMin").addEventListener("input", updateView);
+$("#vMax").addEventListener("input", updateView);
+
+$("#vSort").value = view.sort;
+loadLocation();
+load().catch(() => {
+  statusEl.textContent = "Failed to load saved data — is the server reachable?";
+  carsEl.innerHTML = `<div class="empty-state"><div><strong>Couldn't load the watchlist</strong><span>Check the server and hit Refresh.</span></div></div>`;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!--
+  Minimal, hand-crafted cars.com results fixture for offline parser tests.
+  Mirrors the real DOM shape the adapter relies on: each listing is an
+  <a href="/vehicledetail/…"> title inside a <fuse-card> that also holds the
+  price, "N mi." mileage, an image, the dealer name, and a dedicated location
+  node rendered as "City, ST (N mi)". Kept small on purpose — no scraped markup.
+-->
+<!DOCTYPE html>
+<html>
+<body>
+<div class="search-results">
+
+  <!-- Card 1: the location-bug case. A dealer name ("Underriner Hyundai")
+       sits right before the location in the flattened text; the parser must
+       still yield just "Billings, MT". Also a duplicate anchor to test dedup. -->
+  <fuse-card>
+    <card-gallery>
+      <img src="https://img.example/1.jpg" alt="2017 Volkswagen Golf Alltrack">
+    </card-gallery>
+    <span class="primary-price">$18,424</span>
+    <span class="mileage">70,285 mi.</span>
+    <span class="payment">Est. $326/mo</span>
+    <a class="vehicle-card-link" href="/vehicledetail/card-1/?attribution_type=premier">Used 2017 Volkswagen Golf Alltrack TSI SE</a>
+    <a class="vehicle-card-link" href="/vehicledetail/card-1/?photo=2">Used 2017 Volkswagen Golf Alltrack TSI SE</a>
+    <div class="dealer-name">Underriner Hyundai</div>
+    <div class="miles-from"><span>Billings, MT (449 mi)</span></div>
+  </fuse-card>
+
+  <!-- Card 2: a genuine two-word city must be preserved intact. -->
+  <fuse-card>
+    <card-gallery>
+      <img src="https://img.example/2.jpg" alt="2019 Volkswagen Golf Alltrack">
+    </card-gallery>
+    <span class="primary-price">$20,499</span>
+    <span class="mileage">47,070 mi.</span>
+    <a class="vehicle-card-link" href="/vehicledetail/card-2/">Used 2019 Volkswagen Golf Alltrack TSI S</a>
+    <div class="dealer-name">Springs Automotive Group</div>
+    <div class="miles-from"><span>Colorado Springs, CO (72 mi)</span></div>
+  </fuse-card>
+
+  <!-- Card 3: missing price, missing mileage, no image. Must parse without
+       error and leave those fields null while still extracting the location. -->
+  <fuse-card>
+    <a class="vehicle-card-link" href="/vehicledetail/card-3/">Certified 2018 Volkswagen Golf Alltrack SE</a>
+    <div class="dealer-name">Some Dealer</div>
+    <div class="miles-from"><span>Santa Fe, NM (210 mi)</span></div>
+  </fuse-card>
+
+  <!-- Card 4: a "Delivery from" prefix in the location node. The lowercase/
+       filler words must not leak into the city — expect "Northlake, IL". -->
+  <fuse-card>
+    <span class="primary-price">$13,999</span>
+    <span class="mileage">74,665 mi.</span>
+    <a class="vehicle-card-link" href="/vehicledetail/card-4/">Used 2017 Volkswagen Golf Alltrack TSI S</a>
+    <div class="miles-from"><span>Delivery from Northlake, IL (620 mi)</span></div>
+  </fuse-card>
+
+  <!-- Card 5: no location node at all — location must come out null, not crash. -->
+  <fuse-card>
+    <span class="primary-price">$15,995</span>
+    <span class="mileage">81,678 mi.</span>
+    <a class="vehicle-card-link" href="/vehicledetail/card-5/">Used 2019 Volkswagen Golf Alltrack TSI S</a>
+    <div class="dealer-name">No Location Motors</div>
+  </fuse-card>
+
+  <!-- Junk anchors that are NOT listings: a photo link with no year and a
+       dealer-profile link. Both must be skipped by the parser. -->
+  <a href="/vehicledetail/gallery-only/">View 16 photos</a>
+  <a href="/dealers/underriner-hyundai/">Underriner Hyundai dealer profile</a>
+
+</div>
+</body>
+</html>
